@@ -239,6 +239,7 @@ var App = React.createClass({
 
   saveSentence() {
     this.sentenceRef.push(this.state.sentence.join(' '));
+    this.setState({sentence: null});
   },
 
   areRecording() {
