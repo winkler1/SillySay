@@ -147,7 +147,7 @@ module.exports = SentenceBuilder;
 
 var INITIAL_WORDS = [
   'Jacob',
-  'is'
+  'is',
   'a',
   'Silly',
   'Monkey',
