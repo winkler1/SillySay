@@ -179,7 +179,7 @@ var App = React.createClass({
     utterance.rate = speechSettings.rate;
     utterance.text = word == '...' ? 'Jacob is a tutu' : word;
     utterance.volume = 0.7; // 0 to 1
-    //speechSynthesis.speak(utterance);
+    speechSynthesis.speak(utterance);
     if (this.areRecording()) {
       this.setState({sentence: this.state.sentence.concat([word])});
     }
