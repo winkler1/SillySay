@@ -35,7 +35,8 @@ var phoneticSpelling = {
 var WordButton = React.createClass({
   propTypes: {
     wordClicked: React.PropTypes.func.isRequired,
-    word: React.PropTypes.string.isRequired
+    word: React.PropTypes.string.isRequired,
+    color: React.PropTypes.string.isRequired
   },
 
   wordClicked() {
@@ -43,15 +44,18 @@ var WordButton = React.createClass({
   },
 
   render() {
-    var wordButtonStyles = {
+    var buttonStyles = {
       minWidth: 100,
       minHeight: 100,
-      margin: 10
+      margin: 10,
+      color: '#fff',
+      backgroundColor: `${this.props.color}`
     };
+
     return (
-      <button className='button-xlarge pure-button pure-button-primary'
-        onClick={this.wordClicked}
-        style={wordButtonStyles}>
+      <button className='pure-button'
+              onClick={this.wordClicked}
+              style={buttonStyles}>
         {this.props.word}
       </button>
     );
@@ -73,19 +77,20 @@ function shuffle(array) {
 var SoundBoard = React.createClass({
   propTypes: {
     wordClicked: React.PropTypes.func.isRequired,
-    words: React.PropTypes.array.isRequired
+    words: React.PropTypes.array.isRequired,
+    color: React.PropTypes.string.isRequired
   },
 
   renderWordButtons() {
     var words = this.props.words;
-    return words.map(function (word, index) {
-      return (<WordButton
-        className='pure-u-1-3'
-        key={index}
-        word={word}
-        wordClicked={this.props.wordClicked}
-      />);
-    }.bind(this))
+    return words.map( (word, index) => {
+      return (
+          <WordButton key={index}
+                      word={word}
+                      color={this.props.color}
+                      wordClicked={this.props.wordClicked}/>
+      );
+    })
   },
   render() {
     return (
@@ -103,7 +108,7 @@ var WordForm = React.createClass({
     submitHandler: React.PropTypes.func.isRequired
   },
 
-  submit(e) {
+  handleSubmit(e) {
     var word, wordInputNode;
     e.preventDefault();
     wordInputNode = this.refs.wordInput.getDOMNode();
@@ -113,14 +118,14 @@ var WordForm = React.createClass({
   },
 
   render() {
+    var formStyle = {
+      marginTop: 10
+    }
     return (
-      <form onSubmit={this.submit}
-        className='pure-form'>
-        <label htmlFor='word-input'>New Word</label>
-        <input id='word-input' type='text' ref='wordInput'/>
-      &nbsp;
-        <button className='button-success pure-button' type='submit'>
-        Add Word
+      <form style={formStyle} onSubmit={this.handleSubmit} className='pure-form'>
+        <input type='text' ref='wordInput'/>&nbsp;
+        <button className='pure-button' type='submit'>
+          Add New Word
         </button>
       </form>
     );
@@ -129,21 +134,17 @@ var WordForm = React.createClass({
 
 var SentenceBuilder = React.createClass({
   propTypes: {
-    cancelSentence: React.PropTypes.func.isRequired,
-    saveSentence: React.PropTypes.func.isRequired,
     words: React.PropTypes.array.isRequired
   },
 
   render() {
-    return <div>
-    {this.props.words.join(' ')}
-      <button onClick={this.props.saveSentence}>Save</button>
-      <button onClick={this.props.cancelSentence}>Cancel</button>
-    </div>
+    return (
+      <div style={{ textAlign: 'center', padding: 10 }}>
+        { this.props.words.join(' ') }
+      </div>
+    );
   }
 });
-
-module.exports = SentenceBuilder;
 
 var INITIAL_WORDS = [
   'Jacob',
@@ -180,36 +181,37 @@ var App = React.createClass({
     utterance.text = word == '...' ? 'Jacob is a tutu' : word;
     utterance.volume = 0.7; // 0 to 1
     speechSynthesis.speak(utterance);
-    if (this.areRecording()) {
+    if (this.isRecording()) {
       this.setState({sentence: this.state.sentence.concat([word])});
     }
   },
 
   toArray(obj) {
     obj = obj || {};
-    return Object.keys(obj).map((key) => obj[key]);
+    return Object.keys(obj).map( (key) => obj[key] );
   },
 
   componentDidMount() {
-    var key = 'abc123';
-    this.firebaseRef = new Firebase(FIREBASE_URL);
-    this.wordsRef = this.firebaseRef.child(key+'/words');
-    this.wordsRef.on('value', function (snapshot) {
+    var hashKey = null // TODO: setup hashed url fragment for firebase
 
-      setTimeout(function () {
+    this.firebaseRef = new Firebase(FIREBASE_URL);
+    this.wordsRef = this.firebaseRef.child(`${hashKey}/words`);
+    this.wordsRef.on('value', (snapshot) => {
+
+      setTimeout( () => {
         var words = this.toArray(snapshot.val());
         this.setState({words});
 
         if (!words.length) {
           this.wordsRef.set(INITIAL_WORDS); // SEED Firebase initially
         }
-      }.bind(this), 0);
-    }.bind(this));
+      }, 0);
+    });
 
-    this.sentenceRef = this.firebaseRef.child(key+'/sentences');
-    this.sentenceRef.on('value', function (snapshot) {
+    this.sentenceRef = this.firebaseRef.child(`${hashKey}/sentences`);
+    this.sentenceRef.on('value', (snapshot) => {
 
-      setTimeout(function () {
+      setTimeout( () => {
         //debugger;
         var sentences = this.toArray(snapshot.val());
         this.setState({sentences});
@@ -217,8 +219,8 @@ var App = React.createClass({
         if (!sentences.length) {
           this.sentenceRef.set([]); // SEED Firebase initially
         }
-      }.bind(this), 0);
-    }.bind(this));
+      }, 0);
+    });
   },
 
   getInitialState() {
@@ -237,12 +239,12 @@ var App = React.createClass({
     this.wordsRef.push(word);
   },
 
-  saveSentence() {
+  saveRecording() {
     this.sentenceRef.push(this.state.sentence.join(' '));
     this.setState({sentence: null});
   },
 
-  areRecording() {
+  isRecording() {
     return (this.state.sentence !== null);
   },
 
@@ -250,20 +252,68 @@ var App = React.createClass({
     this.setState({sentence: []});
   },
 
-  cancelSentence() {
-    this.setState({sentence: null});
+  renderSentenceBuilder() {
+    if (this.isRecording()) {
+      return (
+        <SentenceBuilder words={this.state.sentence} />
+      );
+    }
+  },
+
+  renderSentenceBuilderButton() {
+    var stopStyles = {
+      width: '100%',
+      backgroundColor: 'rgb(202, 60, 60)',
+      fontSize: '200%',
+      color: '#fff'
+    };
+
+    var startStyles = {
+      width: '100%',
+      backgroundColor: 'rgb(28, 184, 65)',
+      fontSize: '200%',
+      color: '#fff'
+    }
+
+    if (this.isRecording()) {
+      return (
+        <button onClick={this.saveRecording}
+                className='pure-button'
+                style={stopStyles}>
+          STOP
+        </button>
+      );
+    } else {
+      return (
+        <button onClick={this.startRecording}
+                className='pure-button'
+                style={startStyles}>
+          RECORD
+        </button>
+      );
+    }
   },
 
   render() {
-    var activeSentence = this.areRecording() ? <SentenceBuilder cancelSentence={this.cancelSentence} saveSentence={this.saveSentence} words={this.state.sentence} /> :
-      <button onClick={this.startRecording}>RECORD</button> // TODO: BIG RED BUTTON
+    var containerStyles = {
+      maxWidth: 900,
+      marginLeft: 'auto',
+      marginRight: 'auto'
+    }
     return (
-      <div>
+      <div style={containerStyles}>
         <SettingsPanel/>
         <WordForm submitHandler={this.handleWordInputSubmit}/>
-        <SoundBoard wordClicked={this.wordClicked} words={this.state.words} />
-        <SoundBoard wordClicked={this.wordClicked} words={this.state.sentences} />
-        {activeSentence}
+        <SoundBoard wordClicked={this.wordClicked} words={this.state.words} color='#0078e7' />
+        <hr />
+        <div style={{ marginTop: 10 }}>
+          {this.renderSentenceBuilderButton()}
+        </div>
+        <div style={{ marginTop: 10 }}>
+          {this.renderSentenceBuilder()}
+        </div>
+        < hr/>
+        <SoundBoard wordClicked={this.wordClicked} words={this.state.sentences} color='#42B8DD'/>
       </div>
     );
 

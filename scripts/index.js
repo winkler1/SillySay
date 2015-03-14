@@ -12,4 +12,4 @@ var utterance = new SpeechSynthesisUtterance();
 utterance.volume=0;
 speechSynthesis.speak(utterance);
 
-React.render(<App />, document.body);
+React.render(<App />, document.getElementById('app'));
