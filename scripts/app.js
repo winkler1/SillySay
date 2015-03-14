@@ -174,11 +174,10 @@ var App = React.createClass({
 
   wordClicked(word) {
     var utterance = new SpeechSynthesisUtterance();
-    word = phoneticSpelling[word] || word;
     utterance.lang = speechSettings.lang;
     utterance.pitch = speechSettings.pitch;
     utterance.rate = speechSettings.rate;
-    utterance.text = word == '...' ? 'Jacob is a tutu' : word;
+    utterance.text = phoneticSpelling[word] || word;
     utterance.volume = 0.7; // 0 to 1
     speechSynthesis.speak(utterance);
     if (this.isRecording()) {
@@ -244,7 +243,7 @@ var App = React.createClass({
     this.setState({sentence: null});
   },
 
-  isRecording() {
+  recording() {
     return (this.state.sentence !== null);
   },
 
@@ -253,7 +252,7 @@ var App = React.createClass({
   },
 
   renderSentenceBuilder() {
-    if (this.isRecording()) {
+    if (this.recording()) {
       return (
         <SentenceBuilder words={this.state.sentence} />
       );
@@ -275,7 +274,7 @@ var App = React.createClass({
       color: '#fff'
     }
 
-    if (this.isRecording()) {
+    if (this.recording()) {
       return (
         <button onClick={this.saveRecording}
                 className='pure-button'
@@ -299,7 +298,8 @@ var App = React.createClass({
       maxWidth: 900,
       marginLeft: 'auto',
       marginRight: 'auto'
-    }
+    };
+
     return (
       <div style={containerStyles}>
         <SettingsPanel/>
