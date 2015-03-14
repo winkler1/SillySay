@@ -40,7 +40,7 @@ var WordButton = React.createClass({
   },
 
   wordClicked() {
-    this.props.wordClicked(this.props.word)
+    this.props.wordClicked(this.props.word);
   },
 
   render() {
@@ -54,8 +54,8 @@ var WordButton = React.createClass({
 
     return (
       <button className='pure-button'
-              onClick={this.wordClicked}
-              style={buttonStyles}>
+        onClick={this.wordClicked}
+        style={buttonStyles}>
         {this.props.word}
       </button>
     );
@@ -74,6 +74,7 @@ function shuffle(array) {
   return array;
 }
 
+// Render a collection of words as big buttons.
 var SoundBoard = React.createClass({
   propTypes: {
     wordClicked: React.PropTypes.func.isRequired,
@@ -82,13 +83,12 @@ var SoundBoard = React.createClass({
   },
 
   renderWordButtons() {
-    var words = this.props.words;
-    return words.map( (word, index) => {
+    return this.props.words.map((word, index) => {
       return (
-          <WordButton key={index}
-                      word={word}
-                      color={this.props.color}
-                      wordClicked={this.props.wordClicked}/>
+        <WordButton key={index}
+          color={this.props.color}
+          word={word}
+          wordClicked={this.props.wordClicked}/>
       );
     })
   },
@@ -120,12 +120,13 @@ var WordForm = React.createClass({
   render() {
     var formStyle = {
       marginTop: 10
-    }
+    };
     return (
       <form style={formStyle} onSubmit={this.handleSubmit} className='pure-form'>
-        <input type='text' ref='wordInput'/>&nbsp;
+        <input type='text' ref='wordInput'/>
+      &nbsp;
         <button className='pure-button' type='submit'>
-          Add New Word
+        Add New Word
         </button>
       </form>
     );
@@ -139,7 +140,7 @@ var SentenceBuilder = React.createClass({
 
   render() {
     return (
-      <div style={{ textAlign: 'center', padding: 10 }}>
+      <div style={{textAlign: 'center', padding: 10}}>
         { this.props.words.join(' ') }
       </div>
     );
@@ -180,14 +181,14 @@ var App = React.createClass({
     utterance.text = phoneticSpelling[word] || word;
     utterance.volume = 0.7; // 0 to 1
     speechSynthesis.speak(utterance);
-    if (this.isRecording()) {
+    if (this.recording()) {
       this.setState({sentence: this.state.sentence.concat([word])});
     }
   },
 
   toArray(obj) {
     obj = obj || {};
-    return Object.keys(obj).map( (key) => obj[key] );
+    return Object.keys(obj).map((key) => obj[key]);
   },
 
   componentDidMount() {
@@ -197,7 +198,7 @@ var App = React.createClass({
     this.wordsRef = this.firebaseRef.child(`${hashKey}/words`);
     this.wordsRef.on('value', (snapshot) => {
 
-      setTimeout( () => {
+      setTimeout(() => {
         var words = this.toArray(snapshot.val());
         this.setState({words});
 
@@ -210,7 +211,7 @@ var App = React.createClass({
     this.sentenceRef = this.firebaseRef.child(`${hashKey}/sentences`);
     this.sentenceRef.on('value', (snapshot) => {
 
-      setTimeout( () => {
+      setTimeout(() => {
         //debugger;
         var sentences = this.toArray(snapshot.val());
         this.setState({sentences});
@@ -239,7 +240,10 @@ var App = React.createClass({
   },
 
   saveRecording() {
-    this.sentenceRef.push(this.state.sentence.join(' '));
+    var words = this.state.sentence;
+    if (words.length > 1) {
+      this.sentenceRef.push(words.join(' '));
+    }
     this.setState({sentence: null});
   },
 
@@ -277,17 +281,17 @@ var App = React.createClass({
     if (this.recording()) {
       return (
         <button onClick={this.saveRecording}
-                className='pure-button'
-                style={stopStyles}>
-          STOP
+          className='pure-button'
+          style={stopStyles}>
+        STOP
         </button>
       );
     } else {
       return (
         <button onClick={this.startRecording}
-                className='pure-button'
-                style={startStyles}>
-          RECORD
+          className='pure-button'
+          style={startStyles}>
+        RECORD
         </button>
       );
     }
@@ -306,10 +310,10 @@ var App = React.createClass({
         <WordForm submitHandler={this.handleWordInputSubmit}/>
         <SoundBoard wordClicked={this.wordClicked} words={this.state.words} color='#0078e7' />
         <hr />
-        <div style={{ marginTop: 10 }}>
+        <div style={{marginTop: 10}}>
           {this.renderSentenceBuilderButton()}
         </div>
-        <div style={{ marginTop: 10 }}>
+        <div style={{marginTop: 10}}>
           {this.renderSentenceBuilder()}
         </div>
         < hr/>
